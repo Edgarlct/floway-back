@@ -16,6 +16,10 @@ class AudioController extends HelperController
     #[Route('/api/audio', methods: ["POST"])]
     public function saveAudio(Request $request)
     {
+        ini_set('upload_max_filesize', '10M');
+        ini_set('post_max_size', '10M');
+        ini_set('max_execution_time', '300');
+
         $file = $request->files->get('file');
         $payload = json_decode($request->request->get('payload'), true);
 
@@ -24,8 +28,8 @@ class AudioController extends HelperController
         // check if the file is an audio file
         $audio_file = $file->getClientOriginalName();
         $audio_file_extension = pathinfo($audio_file, PATHINFO_EXTENSION);
-        if (!in_array($audio_file_extension, ['mp3', 'wav'])) {
-            return $this->res("Invalid audio file (MP3, WAV)", 400);
+        if (!in_array($audio_file_extension, ['mp3', 'wav', 'm4a'])) {
+            return $this->res("Invalid audio file (MP3, WAV, m4a)", 400);
         }
 
         // check if the file is not empty
@@ -47,6 +51,8 @@ class AudioController extends HelperController
         if (isset($fileInfo['playtime_seconds'])) $duration = $fileInfo['playtime_seconds'];
 
         $file_name = md5(uniqid()) . '.' . $audio_file_extension;
+        $size = $file->getSize();
+        $mime_type = $file->getMimeType();
         $file->move($audio_path, $file_name);
 
         $audio = new Audio();
@@ -55,7 +61,8 @@ class AudioController extends HelperController
             ->setOriginalName($audio_file)
             ->setPath($audio_path . '/' . $file_name)
             ->setDuration($duration)
-            ->setFileSize($file->getSize())
+            ->setFileSize($size)
+            ->setMimeType($mime_type)
             ->setUser($this->getUser());
 
         $this->entityManager->persist($audio);
@@ -69,7 +76,35 @@ class AudioController extends HelperController
     public function getAudios(Request $request)
     {
         $pdo = new NewPDO();
-        $audios = $pdo->fetch("SELECT * FROM audio WHERE user_id = ? AND is_deleted IS NOT TRUE", [$this->getUser()->getId()]);
+        $audios = $pdo->fetch("SELECT id, title, duration, file_size, original_name FROM audio WHERE user_id = ? AND is_deleted IS NOT TRUE", [$this->getUser()->getId()]);
         return $this->success($audios);
+    }
+
+    #[Route('/api/audio/{id}', methods: ["GET"])]
+    public function getAudio($id)
+    {
+        $pdo = new NewPDO();
+        $audio = $pdo->fetch("SELECT path, mime_type FROM audio WHERE id = ? AND user_id = ? AND is_deleted IS NOT TRUE", [$id, $this->getUser()->getId()]);
+        if (empty($audio)) return $this->res("Audio not found", 404);
+
+        // return the audio file
+        $audio_path = $audio[0]['path'];
+        // get extension
+        $ext = pathinfo($audio_path, PATHINFO_EXTENSION);
+        if (!in_array($ext, ['mp3', 'wav', 'm4a'])) {
+            return $this->res("Invalid audio file", 400);
+        }
+
+        // Définir le Content-Type en fonction de l'extension
+        $content_types = [
+            'mp3' => 'audio/mpeg',
+            'wav' => 'audio/wav',
+            'm4a' => 'audio/mp4'
+        ];
+
+        $audio_file = file_get_contents($audio_path);
+        $response = new Response($audio_file);
+        $response->headers->set('Content-Type', $audio[0]["mime_type"] ?? $content_types[$ext]);
+        return $response;
     }
 }

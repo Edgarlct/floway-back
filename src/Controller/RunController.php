@@ -18,6 +18,12 @@ class RunController extends HelperController
             return $this->res("Missing key in payload", null, 400);
         }
 
+        if (!key_exists("time_objective", $payload)) $payload["time_objective"] = null;
+        if (!key_exists("distance_objective", $payload)) $payload["distance_objective"] = null;
+        if (!key_exists("price", $payload)) $payload["price"] = null;
+        if (!key_exists("description", $payload)) $payload["description"] = null;
+
+
         $pdo = new NewPDO();
         $pdo->connection->beginTransaction();
         try {
@@ -46,10 +52,12 @@ class RunController extends HelperController
                 $payload['distance_objective'],                         // distance_objective
                 $payload['price'] !== null ? $payload['price'] : null,  // price
                 $payload['price'] !== null ? 1 : 0,                     // is_buyable
+                $payload['description'],                                // description
+                $this->getUser()->getId()                               // user_id
             ];
 
-            $pdo->exec("INSERT INTO run (id, title, time_objective, distance_objective, price, is_buyable) VALUES " . $pdo->pQMS(6), $run_params);
-            $pdo->exec("INSERT INTO run_audio_activation (run_id, audio_id, time, distance) VALUES " . $pdo->aNPQMS($activation_params, 4), $activation_params);
+            $pdo->exec("INSERT INTO run (id, title, time_objective, distance_objective, price, is_buyable, description, user_id) VALUES " . $pdo->pQMS(8), $run_params);
+            $pdo->exec("INSERT INTO activation_param (run_id, audio_id, time, distance) VALUES " . $pdo->aNPQMS($activation_params, 4), $activation_params);
 
             $pdo->connection->commit();
             return $this->res(["run_id" => $next_available_run_id], null, 201);
@@ -66,12 +74,27 @@ class RunController extends HelperController
         $bought_runs = $pdo->fetch("SELECT * FROM run_buyer WHERE user_id = ?", [$this->getUser()->getId()]);
         $run_ids = $pdo->extractProperty("run_id", $bought_runs);
 
-        $runs = $pdo->fetch("SELECT * FROM run WHERE user_id = ? OR id IN " . $pdo->pQMS(sizeof($run_ids)), array_merge([$this->getUser()->getId()], $run_ids));
+        $sql = "SELECT * FROM run WHERE user_id = ? ";
+        if (!empty($run_ids)) $sql .= "OR id IN " . $pdo->pQMS(sizeof($run_ids));
+        $runs_result = $pdo->fetch($sql, array_merge([$this->getUser()->getId()], $run_ids));
+
+        $runs = [];
+        foreach ($runs_result as $run) {
+            $bought = in_array($run['id'], $run_ids);
+            $run['is_bought'] = $bought;
+            if (!$bought && $run["is_deleted"]) continue;
+
+            $runs[] = $run;
+        }
+
         $user_ids = $pdo->extractProperty("user_id", $runs);
         $run_ids = $pdo->extractProperty("id", $runs);
 
+        if (empty($user_ids)) return $this->success(["runs" => $runs]);
+        if (empty($run_ids)) return $this->success(["runs" => $runs, "users" => []]);
+
         $activation_param = $pdo->fetch("SELECT * FROM activation_param WHERE run_id IN " . $pdo->pQMS(sizeof($run_ids)), $run_ids);
-        $users = $pdo->fetch("SELECT first_name, last_name, picture_path FROM user WHERE id IN " . $pdo->pQMS(sizeof($user_ids)), $user_ids);
+        $users = $pdo->fetch("SELECT id,first_name, last_name, picture_path FROM user WHERE id IN " . $pdo->pQMS(sizeof($user_ids)), $user_ids);
 
         return $this->success([
             "runs" => $runs,
@@ -114,4 +137,43 @@ class RunController extends HelperController
         }
     }
 
+
+    // get one run by id
+    #[Route('/api/run/{id}', methods: ["GET"])]
+    public function getRun($id)
+    {
+        $pdo = new NewPDO();
+        $run = $pdo->fetch("SELECT * FROM run WHERE id = ?", [$id]);
+        if (empty($run)) return $this->res("Run not found", null, 404);
+
+        $activation_param = $pdo->fetch("SELECT * FROM activation_param WHERE run_id = ?", [$id]);
+        $user = $pdo->fetch("SELECT id,first_name, last_name, picture_path FROM user WHERE id = ?", [$run[0]['user_id']]);
+
+        return $this->success([
+            "run" => $run[0],
+            "activation_param" => $activation_param,
+            "user" => empty($user) ? null : $user[0]
+        ]);
+    }
+
+    // delete run
+    #[Route('/api/run/{id}', methods: ["DELETE"])]
+    public function deleteRun($id)
+    {
+        $pdo = new NewPDO();
+        $pdo->connection->beginTransaction();
+        try {
+            $run = $pdo->fetch("SELECT * FROM run WHERE id = ?", [$id]);
+            if (empty($run)) return $this->res("Run not found", null, 404);
+            if ($run[0]["is_buyable"]) return $this->res("Run is buyable, you can't delete it", null, 400);
+
+            $pdo->exec("UPDATE run SET is_deleted = 1 WHERE id = ?", [$id]);
+            $pdo->connection->commit();
+
+            return $this->res("Run deleted successfully");
+        } catch (\Throwable $th) {
+            $pdo->connection->rollBack();
+            return $this->res($th->getMessage(), 500);
+        }
+    }
 }

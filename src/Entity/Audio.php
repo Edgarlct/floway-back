@@ -50,6 +50,9 @@ class Audio
     #[ORM\Column(nullable: true)]
     private ?bool $isDeleted = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $mimeType = null;
+
     public function __construct()
     {
         $this->activationParams = new ArrayCollection();
@@ -170,6 +173,18 @@ class Audio
     public function setDeleted(?bool $isDeleted): static
     {
         $this->isDeleted = $isDeleted;
+
+        return $this;
+    }
+
+    public function getMimeType(): ?string
+    {
+        return $this->mimeType;
+    }
+
+    public function setMimeType(?string $mimeType): static
+    {
+        $this->mimeType = $mimeType;
 
         return $this;
     }

@@ -26,6 +26,9 @@ class UserController extends HelperController
     public function registerUser(Request $request)
     {
         $payload = json_decode($request->getContent(), true);
+        if (!$this->checkKeyInPayload($payload, ['email', 'password', 'first_name', 'last_name'])) {
+            return $this->res("Missing key in payload", null, 400);
+        }
         $roles = ["ROLE_USER"];
 
         $email_exist = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $payload['email']]);
@@ -58,9 +61,9 @@ class UserController extends HelperController
     }
 
 
-    #[Route('/', methods: ["GET"])]
+    #[Route('/api/user/me', methods: ["GET"])]
     public function index(): Response
     {
-        return $this->success("Hello World");
+        return $this->success($this->getUser(), ["readData"]);
     }
 }
