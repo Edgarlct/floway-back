@@ -11,7 +11,6 @@ class JWTCreatedListener
         $user = $event->getUser();
         $payload = $event->getData();
 
-        // Ajouter des propriétés personnalisées
         $payload['user_id'] = $user->getId();
         $payload['email'] = $user->getEmail();
         $payload['username'] = $user->getAlias();

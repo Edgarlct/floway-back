@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
+use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -23,6 +24,50 @@ class UserController extends HelperController
     }
 
     #[Route('/api/register', methods: ["POST"])]
+    #[OA\Post(
+        path: '/api/register',
+        summary: 'Register a new user',
+        description: 'Create a new user account',
+        tags: ['Authentication'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                properties: [
+                    'email' => new OA\Property(property: 'email', type: 'string', format: 'email', description: 'User email address', example: 'user@example.com'),
+                    'password' => new OA\Property(property: 'password', type: 'string', description: 'User password', example: 'securePassword123'),
+                    'first_name' => new OA\Property(property: 'first_name', type: 'string', description: 'User first name', example: 'John'),
+                    'last_name' => new OA\Property(property: 'last_name', type: 'string', description: 'User last name', example: 'Doe'),
+                    'username' => new OA\Property(property: 'username', type: 'string', description: 'User username/alias', example: 'johndoe')
+                ],
+                type: 'object'
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 201,
+                description: 'User registered successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        'id' => new OA\Property(property: 'id', type: 'integer', example: 1),
+                        'email' => new OA\Property(property: 'email', type: 'string', example: 'user@example.com'),
+                        'first_name' => new OA\Property(property: 'first_name', type: 'string', example: 'John'),
+                        'last_name' => new OA\Property(property: 'last_name', type: 'string', example: 'Doe'),
+                        'username' => new OA\Property(property: 'username', type: 'string', example: 'johndoe')
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(
+                response: 400,
+                description: 'Bad request - Missing parameters or email already exists',
+                content: new OA\JsonContent(
+                    properties: [
+                        'message' => new OA\Property(property: 'message', type: 'string', example: 'Email already exist')
+                    ]
+                )
+            )
+        ]
+    )]
     public function registerUser(Request $request)
     {
         $payload = json_decode($request->getContent(), true);
@@ -52,6 +97,67 @@ class UserController extends HelperController
     }
 
     #[Route('/api/user', methods: ["PUT"])]
+    #[OA\Put(
+        path: '/api/user',
+        summary: 'Update user profile',
+        description: 'Update current user profile information and picture',
+        tags: ['User'],
+        security: [['bearerAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: false,
+            content: [
+                'multipart/form-data' => new OA\MediaType(
+                    mediaType: 'multipart/form-data',
+                    schema: new OA\Schema(
+                        properties: [
+                            'payload' => new OA\Property(
+                                property: 'payload',
+                                type: 'string',
+                                description: 'JSON payload with user data',
+                                example: '{"first_name": "John", "last_name": "Doe"}'
+                            ),
+                            'picture' => new OA\Property(
+                                property: 'picture',
+                                type: 'string',
+                                format: 'binary',
+                                description: 'Profile picture file (jpg, jpeg, png)'
+                            )
+                        ],
+                        type: 'object'
+                    )
+                )
+            ]
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'User profile updated successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        'id' => new OA\Property(property: 'id', type: 'integer', example: 1),
+                        'email' => new OA\Property(property: 'email', type: 'string', example: 'user@example.com'),
+                        'first_name' => new OA\Property(property: 'first_name', type: 'string', example: 'John'),
+                        'last_name' => new OA\Property(property: 'last_name', type: 'string', example: 'Doe'),
+                        'picture_path' => new OA\Property(property: 'picture_path', type: 'string', example: '/uploads/abc123.jpg')
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(
+                response: 400,
+                description: 'Bad request - Invalid file format or size',
+                content: new OA\JsonContent(
+                    properties: [
+                        'message' => new OA\Property(property: 'message', type: 'string', example: 'Invalid picture format')
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'User not found'
+            )
+        ]
+    )]
     public function updateUser(Request $request) {
         $payload = json_decode($request->get("payload"), true);
 
@@ -97,6 +203,40 @@ class UserController extends HelperController
     }
 
     #[Route('/api/user/search', methods: ["GET"])]
+    #[OA\Get(
+        path: '/api/user/search',
+        summary: 'Search users',
+        description: 'Search users by first name or last name',
+        tags: ['User'],
+        security: [['bearerAuth' => []]],
+        parameters: [
+            new OA\Parameter(
+                name: 'query',
+                description: 'Search query for first name or last name',
+                in: 'query',
+                required: true,
+                schema: new OA\Schema(type: 'string', example: 'John')
+            )
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Search results retrieved successfully',
+                content: new OA\JsonContent(
+                    type: 'array',
+                    items: new OA\Items(
+                        properties: [
+                            'id' => new OA\Property(property: 'id', type: 'integer', example: 1),
+                            'first_name' => new OA\Property(property: 'first_name', type: 'string', example: 'John'),
+                            'last_name' => new OA\Property(property: 'last_name', type: 'string', example: 'Doe'),
+                            'username' => new OA\Property(property: 'username', type: 'string', example: 'johndoe')
+                        ],
+                        type: 'object'
+                    )
+                )
+            )
+        ]
+    )]
     public function searchUser(Request $request)
     {
         // we want to search user by first name or last name
@@ -108,12 +248,71 @@ class UserController extends HelperController
 
 
     #[Route('/api/user/me', methods: ["GET"])]
+    #[OA\Get(
+        path: '/api/user/me',
+        summary: 'Get current user profile',
+        description: 'Get the authenticated user\'s profile information',
+        tags: ['User'],
+        security: [['bearerAuth' => []]],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'User profile retrieved successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        'id' => new OA\Property(property: 'id', type: 'integer', example: 1),
+                        'email' => new OA\Property(property: 'email', type: 'string', example: 'user@example.com'),
+                        'first_name' => new OA\Property(property: 'first_name', type: 'string', example: 'John'),
+                        'last_name' => new OA\Property(property: 'last_name', type: 'string', example: 'Doe'),
+                        'username' => new OA\Property(property: 'username', type: 'string', example: 'johndoe'),
+                        'picture_path' => new OA\Property(property: 'picture_path', type: 'string', example: '/uploads/abc123.jpg')
+                    ],
+                    type: 'object'
+                )
+            )
+        ]
+    )]
     public function index(): Response
     {
         return $this->success($this->getUser(), ["readData"]);
     }
 
     #[Route('/api/user/username/free', methods: ["GET"])]
+    #[OA\Get(
+        path: '/api/user/username/free',
+        summary: 'Check username availability',
+        description: 'Check if a username is available for registration',
+        tags: ['User'],
+        parameters: [
+            new OA\Parameter(
+                name: 'username',
+                description: 'Username to check availability',
+                in: 'query',
+                required: true,
+                schema: new OA\Schema(type: 'string', example: 'johndoe')
+            )
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Username is available',
+                content: new OA\JsonContent(
+                    properties: [
+                        'message' => new OA\Property(property: 'message', type: 'string', example: 'Username is free')
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 400,
+                description: 'Username not available or missing parameter',
+                content: new OA\JsonContent(
+                    properties: [
+                        'message' => new OA\Property(property: 'message', type: 'string', example: 'Username already taken')
+                    ]
+                )
+            )
+        ]
+    )]
     public function usernameIsFree(Request $request): Response
     {
         $username = $request->query->get('username');
@@ -130,6 +329,36 @@ class UserController extends HelperController
     }
 
     #[Route('/api/user/picture/{user}', methods: ["GET"])]
+    #[OA\Get(
+        path: '/api/user/picture/{user}',
+        summary: 'Get user profile picture',
+        description: 'Retrieve a user\'s profile picture',
+        tags: ['User'],
+        security: [['bearerAuth' => []]],
+        parameters: [
+            new OA\Parameter(
+                name: 'user',
+                description: 'User ID',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'integer')
+            )
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Profile picture retrieved successfully',
+                content: new OA\MediaType(
+                    mediaType: 'image/*',
+                    schema: new OA\Schema(type: 'string', format: 'binary')
+                )
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'User or picture not found'
+            )
+        ]
+    )]
     public function getPicture(User $user)
     {
         if ($user->getPicturePath()) {

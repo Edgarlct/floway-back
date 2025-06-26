@@ -1,0 +1,69 @@
+nelmio_api_doc:
+    documentation:
+        info:
+            title: Flow Back API
+            description: Flow Back PHP API Documentation - A fitness and running application with audio coaching features
+            version: 1.0.0
+        components:
+            securitySchemes:
+                bearerAuth:
+                    type: http
+                    scheme: bearer
+                    bearerFormat: JWT
+                    description: 'Enter JWT Bearer token in format: Bearer {token}'
+        servers:
+            - url: 'http://localhost:8000'
+              description: 'API Server'
+        paths:
+            /api/login:
+                post:
+                    tags:
+                        - Authentication
+                    summary: 'User login'
+                    description: 'Authenticate user and receive JWT token'
+                    requestBody:
+                        required: true
+                        content:
+                            application/json:
+                                schema:
+                                    type: object
+                                    properties:
+                                        email:
+                                            type: string
+                                            description: 'User email address'
+                                            example: 'user@example.com'
+                                        password:
+                                            type: string
+                                            description: 'User password'
+                                            example: 'password123'
+                                    required:
+                                        - email
+                                        - password
+                    responses:
+                        '200':
+                            description: 'Login successful'
+                            content:
+                                application/json:
+                                    schema:
+                                        type: object
+                                        properties:
+                                            token:
+                                                type: string
+                                                description: 'JWT access token'
+                                                example: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9...'
+                        '401':
+                            description: 'Invalid credentials'
+                            content:
+                                application/json:
+                                    schema:
+                                        type: object
+                                        properties:
+                                            code:
+                                                type: integer
+                                                example: 401
+                                            message:
+                                                type: string
+                                                example: 'Invalid credentials.'
+    areas: # to filter documented areas
+        path_patterns:
+            - ^/api(?!/doc$) # Accepts routes under /api except /api/doc

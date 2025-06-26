@@ -38,9 +38,14 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
     {
         $pdo = new NewPDO();
 
-        // TODO Add if user as a request + Username
-        return $pdo->fetch("SELECT id, first_name, last_name, alias AS username
+        return $pdo->fetch("SELECT user.id, first_name, last_name, alias AS username, friend.id as request_id, 
+                                    CASE WHEN friend.id IS NOT NULL AND is_waiting IS NOT TRUE THEN 'friend' 
+                                         WHEN friend.applicant_id = user.id AND is_waiting IS TRUE THEN 'waiting' 
+                                         WHEN friend.receiver_id = user.id AND is_waiting IS TRUE THEN 'need_response' 
+                                         WHEN friend.id IS NULL THEN 'none'
+                                         ELSE 'none' END AS friend_status
                                   FROM user 
+                                  LEFT JOIN friend ON (user.id = friend.receiver_id OR user.id = friend.applicant_id)
                                   WHERE LOWER(first_name) LIKE ? OR LOWER(last_name) LIKE ? OR LOWER(alias) LIKE ?", ['%'.mb_strtolower($query).'%','%'.mb_strtolower($query).'%', '%'.mb_strtolower($query).'%']);
     }
 

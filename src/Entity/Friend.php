@@ -15,11 +15,11 @@ class Friend
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
-    private ?User $userA = null;
+    private ?User $applicant = null;
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
-    private ?User $userB = null;
+    private ?User $receiver = null;
 
     #[ORM\Column]
     private ?bool $isWaiting = null;
@@ -29,26 +29,26 @@ class Friend
         return $this->id;
     }
 
-    public function getUserA(): ?User
+    public function getApplicant(): ?User
     {
-        return $this->userA;
+        return $this->applicant;
     }
 
-    public function setUserA(?User $userA): static
+    public function setApplicant(?User $applicant): static
     {
-        $this->userA = $userA;
+        $this->applicant = $applicant;
 
         return $this;
     }
 
-    public function getUserB(): ?User
+    public function getReceiver(): ?User
     {
-        return $this->userB;
+        return $this->receiver;
     }
 
-    public function setUserB(?User $userB): static
+    public function setReceiver(?User $receiver): static
     {
-        $this->userB = $userB;
+        $this->receiver = $receiver;
 
         return $this;
     }
