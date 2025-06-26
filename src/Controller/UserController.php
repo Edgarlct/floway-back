@@ -283,6 +283,7 @@ class UserController extends HelperController
         summary: 'Check username availability',
         description: 'Check if a username is available for registration',
         tags: ['User'],
+        security: [['bearerAuth' => []]],
         parameters: [
             new OA\Parameter(
                 name: 'username',

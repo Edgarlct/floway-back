@@ -20,6 +20,7 @@ class FriendController extends HelperController
         summary: 'Send a friend request',
         description: 'Send a friend request to another user',
         tags: ['Friends'],
+        security: [['bearerAuth' => []]],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
@@ -97,6 +98,7 @@ class FriendController extends HelperController
         summary: 'Accept a friend request',
         description: 'Accept a pending friend request',
         tags: ['Friends'],
+        security: [['bearerAuth' => []]],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
@@ -166,6 +168,7 @@ class FriendController extends HelperController
         summary: 'Decline a friend request',
         description: 'Decline a pending friend request',
         tags: ['Friends'],
+        security: [['bearerAuth' => []]],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
@@ -234,6 +237,7 @@ class FriendController extends HelperController
         summary: 'Remove a friend',
         description: 'Remove an existing friend from your friend list',
         tags: ['Friends'],
+        security: [['bearerAuth' => []]],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
@@ -305,6 +309,7 @@ class FriendController extends HelperController
         summary: 'Get list of friends',
         description: 'Get the current user\'s friend list',
         tags: ['Friends'],
+        security: [['bearerAuth' => []]],
         responses: [
             new OA\Response(
                 response: 200,
@@ -355,6 +360,7 @@ class FriendController extends HelperController
         summary: 'Get pending friend requests',
         description: 'Get list of pending friend requests received by the current user',
         tags: ['Friends'],
+        security: [['bearerAuth' => []]],
         responses: [
             new OA\Response(
                 response: 200,
@@ -393,6 +399,7 @@ class FriendController extends HelperController
         summary: 'Toggle friend notification blocking',
         description: 'Block or unblock notifications from a specific friend',
         tags: ['Friends', 'Notifications'],
+        security: [['bearerAuth' => []]],
         parameters: [
             new OA\Parameter(
                 name: 'friend',
