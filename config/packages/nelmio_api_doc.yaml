@@ -12,8 +12,10 @@ nelmio_api_doc:
                     bearerFormat: JWT
                     description: 'Enter JWT Bearer token in format: Bearer {token}'
         servers:
+            - url: 'https://api.floway.edgar-lecomte.fr'
+              description: 'prod'
             - url: 'http://localhost:8000'
-              description: 'API Server'
+              description: 'localhost'
         paths:
             /api/login:
                 post:
