@@ -44,7 +44,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255)]
     private ?string $lastName = null;
 
-    #[Groups(['readData'])]
     #[ORM\Column(length: 500, nullable: true)]
     private ?string $picturePath = null;
 
@@ -66,11 +65,22 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: RunBuyer::class, mappedBy: 'user')]
     private Collection $runBuyers;
 
+    #[Groups(['readData'])]
+    #[ORM\Column(length: 255, unique: true, nullable: true)]
+    private ?string $alias = null;
+
+    /**
+     * @var Collection<int, FriendNotificationSettings>
+     */
+    #[ORM\OneToMany(targetEntity: FriendNotificationSettings::class, mappedBy: 'user')]
+    private Collection $friendNotificationSettings;
+
     public function __construct()
     {
         $this->audio = new ArrayCollection();
         $this->runs = new ArrayCollection();
         $this->runBuyers = new ArrayCollection();
+        $this->friendNotificationSettings = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -268,6 +278,48 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             // set the owning side to null (unless already changed)
             if ($runBuyer->getUser() === $this) {
                 $runBuyer->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getAlias(): ?string
+    {
+        return $this->alias;
+    }
+
+    public function setAlias(?string $alias): static
+    {
+        $this->alias = $alias;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, FriendNotificationSettings>
+     */
+    public function getFriendNotificationSettings(): Collection
+    {
+        return $this->friendNotificationSettings;
+    }
+
+    public function addFriendNotificationSetting(FriendNotificationSettings $friendNotificationSetting): static
+    {
+        if (!$this->friendNotificationSettings->contains($friendNotificationSetting)) {
+            $this->friendNotificationSettings->add($friendNotificationSetting);
+            $friendNotificationSetting->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeFriendNotificationSetting(FriendNotificationSettings $friendNotificationSetting): static
+    {
+        if ($this->friendNotificationSettings->removeElement($friendNotificationSetting)) {
+            // set the owning side to null (unless already changed)
+            if ($friendNotificationSetting->getUser() === $this) {
+                $friendNotificationSetting->setUser(null);
             }
         }
 

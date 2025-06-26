@@ -5,6 +5,7 @@
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
     audio_directory: '%kernel.project_dir%/uploads/audio'
+    picture_directory: '%kernel.project_dir%/uploads/picture'
 services:
     # default configuration for services in *this* file
     _defaults:
@@ -19,6 +20,10 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
+
+    App\EventListener\JWTCreatedListener:
+        tags:
+            - { name: kernel.event_listener, event: lexik_jwt_authentication.on_jwt_created, method: onJWTCreated }
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

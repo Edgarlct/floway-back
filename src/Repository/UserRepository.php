@@ -38,9 +38,10 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
     {
         $pdo = new NewPDO();
 
-        return $pdo->fetch("SELECT id, first_name, last_name
+        // TODO Add if user as a request + Username
+        return $pdo->fetch("SELECT id, first_name, last_name, alias AS username
                                   FROM user 
-                                  WHERE LOWER(first_name) LIKE ? OR LOWER(last_name) LIKE ? ", ['%'.mb_strtolower($query).'%','%'.mb_strtolower($query).'%']);
+                                  WHERE LOWER(first_name) LIKE ? OR LOWER(last_name) LIKE ? OR LOWER(alias) LIKE ?", ['%'.mb_strtolower($query).'%','%'.mb_strtolower($query).'%', '%'.mb_strtolower($query).'%']);
     }
 
 }

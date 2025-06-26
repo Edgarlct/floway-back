@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Friend;
+use App\Entity\FriendNotificationSettings;
 use App\Entity\User;
 use App\Tools\NewPDO;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -29,7 +30,7 @@ class FriendController extends HelperController
         $pdo = new NewPDO();
         $friend_exist = $pdo->fetch("SELECT * 
                                      FROM friend 
-                                     WHERE (user_a = ? OR user_b = ?) AND (user_a = ? OR user_b = ?)", [$user->getId(), $user->getId(), $friend->getId(), $friend->getId()]);
+                                     WHERE (user_a_id = ? OR user_b_id = ?) AND (user_a_id = ? OR user_b_id = ?)", [$user->getId(), $user->getId(), $friend->getId(), $friend->getId()]);
         if ($friend_exist) {
             return $this->res("Friend request already sent", null, 400);
         }
@@ -111,7 +112,7 @@ class FriendController extends HelperController
         $pdo = new NewPDO();
         $friend = $pdo->fetch("SELECT * 
                                      FROM friend 
-                                     WHERE (user_a = ? OR user_b = ?) AND (user_a = ? OR user_b = ?)", [$user->getId(), $user->getId(), $friend->getId(), $friend->getId()]);
+                                     WHERE (user_a_id = ? OR user_b_id = ?) AND (user_a_id = ? OR user_b_id = ?)", [$user->getId(), $user->getId(), $friend->getId(), $friend->getId()]);
         if (empty($friend)) {
             return $this->res("Friend not found", null, 404);
         }
@@ -127,10 +128,14 @@ class FriendController extends HelperController
         $user = $this->getUser();
         $pdo = new NewPDO();
         $friends = $pdo->fetch("SELECT * 
-                                     FROM friend 
-                                     WHERE (user_a = ? OR user_b = ?) AND is_waiting = 0", [$user->getId(), $user->getId()]);
+                                     FROM friend
+                                     WHERE (user_a_id = ? OR user_b_id = ?) AND is_waiting = 0", [$user->getId(), $user->getId()]);
 
-        return $this->res("Friends found", $friends);
+        // TODO: return user_id, user_name
+        $user_ids = [];
+
+
+        return $this->res($friends);
     }
 
     #[Route('/api/friend/list/request', methods: ['GET'])]
@@ -140,9 +145,59 @@ class FriendController extends HelperController
         $pdo = new NewPDO();
         $friends = $pdo->fetch("SELECT * 
                                      FROM friend 
-                                     WHERE (user_a = ? OR user_b = ?) AND is_waiting = 1", [$user->getId(), $user->getId()]);
+                                     WHERE (user_a_id = ? OR user_b_id = ?) AND is_waiting = 1", [$user->getId(), $user->getId()]);
 
-        return $this->res("Friend requests found", $friends);
+        // TODO: return user_id, user_name
+
+        return $this->res($friends);
+    }
+
+    #[Route('/api/friend/notification/block/{friend}', methods: ['POST'])]
+    public function blockNotification(User $friend)
+    {
+        $user = $this->getUser();
+        if (!$user) {
+            return new JsonResponse(['error' => 'User not found'], 404);
+        }
+
+        $notification_settings_repo = $this->entityManager->getRepository(FriendNotificationSettings::class);
+        $notification_settings = $notification_settings_repo->findOneBy([
+            'user' => $user,
+            'friend' => $friend
+        ]);
+
+        if (!$notification_settings) {
+            $notification_settings = new FriendNotificationSettings();
+            $notification_settings
+                ->setUser($user)
+                ->setFriend($friend)
+                ->setNotificationBlock(true);
+        } else {
+            $notification_settings->setNotificationBlock(!$notification_settings->getNotificationBlock());
+        }
+
+
+        $this->entityManager->persist($notification_settings);
+        $this->entityManager->flush();
+
+        return $this->res($notification_settings, ["readData"]);
+    }
+
+    #[Route('/api/friend/notification/settings', methods: ['GET'])]
+    public function getNotificationSettings()
+    {
+        $user = $this->getUser();
+        if (!$user) {
+            return new JsonResponse(['error' => 'User not found'], 404);
+        }
+
+        $notification_settings_repo = $this->entityManager->getRepository(FriendNotificationSettings::class);
+        $notification_settings = $notification_settings_repo->findBy(['friend' => $user]);
+        if (!$notification_settings) {
+            return new JsonResponse(['error' => 'No notification settings found'], 404);
+        }
+
+        return $this->res($notification_settings, ["readData"]);
     }
 
 }
