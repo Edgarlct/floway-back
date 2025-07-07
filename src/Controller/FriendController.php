@@ -346,6 +346,10 @@ class FriendController extends HelperController
             }
         }
 
+        if (empty($user_ids)) {
+            return $this->res([]);
+        }
+
         $users = $pdo->fetch("SELECT id, first_name, last_name, alias AS username 
                                     FROM user 
                                     WHERE id IN " . $pdo->pQMS(sizeof($user_ids)), $user_ids);
@@ -440,6 +444,10 @@ class FriendController extends HelperController
             return new JsonResponse(['error' => 'User not found'], 404);
         }
 
+        if ($user->getId() === $friend->getId()) {
+            return new JsonResponse(['error' => 'You cannot block notifications for yourself'], 400);
+        }
+
         $notification_settings_repo = $this->entityManager->getRepository(FriendNotificationSettings::class);
         $notification_settings = $notification_settings_repo->findOneBy([
             'user' => $user,
@@ -453,7 +461,7 @@ class FriendController extends HelperController
                 ->setFriend($friend)
                 ->setNotificationBlock(true);
         } else {
-            $notification_settings->setNotificationBlock(!$notification_settings->getNotificationBlock());
+            $notification_settings->setNotificationBlock(!$notification_settings->isNotificationBlock());
         }
 
 

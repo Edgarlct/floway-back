@@ -96,8 +96,8 @@ class UserController extends HelperController
         return $this->success($user, ["readData"], 201);
     }
 
-    #[Route('/api/user', methods: ["PUT"])]
-    #[OA\Put(
+    #[Route('/api/user', methods: ["POST"])]
+    #[OA\Post(
         path: '/api/user',
         summary: 'Update user profile',
         description: 'Update current user profile information and picture',
@@ -114,7 +114,7 @@ class UserController extends HelperController
                                 property: 'payload',
                                 type: 'string',
                                 description: 'JSON payload with user data',
-                                example: '{"first_name": "John", "last_name": "Doe"}'
+                                example: '{"first_name": "John", "last_name": "Doe", "alias": "unique"}'
                             ),
                             'picture' => new OA\Property(
                                 property: 'picture',
@@ -138,7 +138,7 @@ class UserController extends HelperController
                         'email' => new OA\Property(property: 'email', type: 'string', example: 'user@example.com'),
                         'first_name' => new OA\Property(property: 'first_name', type: 'string', example: 'John'),
                         'last_name' => new OA\Property(property: 'last_name', type: 'string', example: 'Doe'),
-                        'picture_path' => new OA\Property(property: 'picture_path', type: 'string', example: '/uploads/abc123.jpg')
+                        'alias' => new OA\Property(property: 'alias', type: 'string', example: 'unique'),
                     ],
                     type: 'object'
                 )
@@ -170,7 +170,7 @@ class UserController extends HelperController
         if ($file) {
             $picture_path = $this->getParameter('picture_directory');
             $picture_name = $file->getClientOriginalName();
-            $extension = pathinfo($picture_path, PATHINFO_EXTENSION);
+            $extension = pathinfo($picture_name, PATHINFO_EXTENSION);
             if (!in_array(strtolower($extension), ['jpg', 'jpeg', 'png'])) {
                 return $this->res("Invalid picture format (jpg, jpeg, png)", 400);
             }
@@ -188,12 +188,18 @@ class UserController extends HelperController
             $user->setPicturePath($picture_path . '/' . $file_name);
         }
 
-        if (isset($payload['first_name'])) {
-            $user->setFirstName($payload['first_name']);
+        if (isset($payload['firstName'])) {
+            $user->setFirstName($payload['firstName']);
         }
 
-        if (isset($payload['last_name'])) {
-            $user->setLastName($payload['last_name']);
+        if (isset($payload['lastName'])) {
+            $user->setLastName($payload['lastName']);
+        }
+
+        if (isset($payload['alias']) ) {
+            $user_with_alias = $this->entityManager->getRepository(User::class)->findOneBy(['alias' => $payload['alias']]);
+            if ($user_with_alias && $user_with_alias->getId() !== $user->getId()) return $this->res("Username already taken", null, 400);
+            $user->setAlias($payload['alias']);
         }
 
         $this->entityManager->persist($user);
@@ -241,7 +247,7 @@ class UserController extends HelperController
     {
         // we want to search user by first name or last name
         $search = $request->query->get('query');
-        $users = $this->entityManager->getRepository(User::class)->search($search);
+        $users = $this->entityManager->getRepository(User::class)->search($search, $this->getUser());
 
         return $this->success($users);
     }
@@ -374,6 +380,6 @@ class UserController extends HelperController
                 return $response;
             }
         }
-        return null;
+        return $this->res("User or picture not found", null, 404);
     }
 }

@@ -15,5 +15,9 @@
 ###> lexik/jwt-authentication-bundle ###
 /config/jwt/*.pem
 ###< lexik/jwt-authentication-bundle ###
+
 /uploads/audio/*
 !/uploads/audio/.gitkeep
+
+/uploads/picture/*
+!/uploads/picture/.gitkeep

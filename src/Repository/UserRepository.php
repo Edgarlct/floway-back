@@ -34,7 +34,7 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
         $this->getEntityManager()->flush();
     }
 
-    public function search($query)
+    public function search($query, User $user)
     {
         $pdo = new NewPDO();
 
@@ -45,8 +45,8 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
                                          WHEN friend.id IS NULL THEN 'none'
                                          ELSE 'none' END AS friend_status
                                   FROM user 
-                                  LEFT JOIN friend ON (user.id = friend.receiver_id OR user.id = friend.applicant_id)
-                                  WHERE LOWER(first_name) LIKE ? OR LOWER(last_name) LIKE ? OR LOWER(alias) LIKE ?", ['%'.mb_strtolower($query).'%','%'.mb_strtolower($query).'%', '%'.mb_strtolower($query).'%']);
+                                  LEFT JOIN friend ON (user.id = friend.receiver_id OR user.id = friend.applicant_id) AND (friend.applicant_id = ? OR friend.receiver_id = ?)
+                                  WHERE user.id != ? AND (LOWER(first_name) LIKE ? OR LOWER(last_name) LIKE ? OR LOWER(alias) LIKE ?)", [$user->getId(), $user->getId(), $user->getId(), '%'.mb_strtolower($query).'%','%'.mb_strtolower($query).'%', '%'.mb_strtolower($query).'%']);
     }
 
 }
