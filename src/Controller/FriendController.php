@@ -346,13 +346,13 @@ class FriendController extends HelperController
             }
         }
 
-        if (empty($user_ids)) {
-            return $this->res([]);
-        }
+        if (empty($user_ids)) return $this->res([]);
 
-        $users = $pdo->fetch("SELECT id, first_name, last_name, alias AS username 
+        $users = $pdo->fetch("SELECT user.id, first_name, last_name, alias, 
+                                        CASE WHEN notification_settings.id IS NOT NULL THEN notification_settings.is_notification_block ELSE false END AS notification_block
                                     FROM user 
-                                    WHERE id IN " . $pdo->pQMS(sizeof($user_ids)), $user_ids);
+                                    LEFT JOIN friend_notification_settings notification_settings ON (user.id = notification_settings.friend_id AND notification_settings.user_id = ? )
+                                    WHERE user.id IN " . $pdo->pQMS(sizeof($user_ids)), [$user->getId(), ...$user_ids]);
 
 
         return $this->res($users);

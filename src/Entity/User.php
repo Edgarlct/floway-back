@@ -75,6 +75,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: FriendNotificationSettings::class, mappedBy: 'user')]
     private Collection $friendNotificationSettings;
 
+    #[Groups(['readData'])]
+    #[ORM\Column]
+    private ?bool $friendAudioEnabled = true;
+
+    #[Groups(['readData'])]
+    #[ORM\Column]
+    private ?bool $coachAudioEnabled = true;
+
     public function __construct()
     {
         $this->audio = new ArrayCollection();
@@ -322,6 +330,30 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
                 $friendNotificationSetting->setUser(null);
             }
         }
+
+        return $this;
+    }
+
+    public function isFriendAudioEnabled(): ?bool
+    {
+        return $this->friendAudioEnabled;
+    }
+
+    public function setFriendAudioEnabled(bool $friendAudioEnabled): static
+    {
+        $this->friendAudioEnabled = $friendAudioEnabled;
+
+        return $this;
+    }
+
+    public function isCoachAudioEnabled(): ?bool
+    {
+        return $this->coachAudioEnabled;
+    }
+
+    public function setCoachAudioEnabled(bool $coachAudioEnabled): static
+    {
+        $this->coachAudioEnabled = $coachAudioEnabled;
 
         return $this;
     }

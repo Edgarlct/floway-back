@@ -114,7 +114,7 @@ class UserController extends HelperController
                                 property: 'payload',
                                 type: 'string',
                                 description: 'JSON payload with user data',
-                                example: '{"first_name": "John", "last_name": "Doe", "alias": "unique"}'
+                                example: '{"firstName": "John", "lastName": "Doe", "alias": "unique", "firendAudioEnabled": true, "coachAudioEnabled": false}'
                             ),
                             'picture' => new OA\Property(
                                 property: 'picture',
@@ -136,8 +136,8 @@ class UserController extends HelperController
                     properties: [
                         'id' => new OA\Property(property: 'id', type: 'integer', example: 1),
                         'email' => new OA\Property(property: 'email', type: 'string', example: 'user@example.com'),
-                        'first_name' => new OA\Property(property: 'first_name', type: 'string', example: 'John'),
-                        'last_name' => new OA\Property(property: 'last_name', type: 'string', example: 'Doe'),
+                        'first_name' => new OA\Property(property: 'firstName', type: 'string', example: 'John'),
+                        'last_name' => new OA\Property(property: 'lastName', type: 'string', example: 'Doe'),
                         'alias' => new OA\Property(property: 'alias', type: 'string', example: 'unique'),
                     ],
                     type: 'object'
