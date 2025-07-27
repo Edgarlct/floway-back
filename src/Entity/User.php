@@ -53,18 +53,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Audio::class, mappedBy: 'user')]
     private Collection $audio;
 
-    /**
-     * @var Collection<int, Run>
-     */
-    #[ORM\OneToMany(targetEntity: Run::class, mappedBy: 'user')]
-    private Collection $runs;
-
-    /**
-     * @var Collection<int, RunBuyer>
-     */
-    #[ORM\OneToMany(targetEntity: RunBuyer::class, mappedBy: 'user')]
-    private Collection $runBuyers;
-
     #[Groups(['readData'])]
     #[ORM\Column(length: 255, unique: true, nullable: true)]
     private ?string $alias = null;
@@ -86,8 +74,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function __construct()
     {
         $this->audio = new ArrayCollection();
-        $this->runs = new ArrayCollection();
-        $this->runBuyers = new ArrayCollection();
         $this->friendNotificationSettings = new ArrayCollection();
     }
 
@@ -226,66 +212,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             // set the owning side to null (unless already changed)
             if ($audio->getUser() === $this) {
                 $audio->setUser(null);
-            }
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Run>
-     */
-    public function getRuns(): Collection
-    {
-        return $this->runs;
-    }
-
-    public function addRun(Run $run): static
-    {
-        if (!$this->runs->contains($run)) {
-            $this->runs->add($run);
-            $run->setUser($this);
-        }
-
-        return $this;
-    }
-
-    public function removeRun(Run $run): static
-    {
-        if ($this->runs->removeElement($run)) {
-            // set the owning side to null (unless already changed)
-            if ($run->getUser() === $this) {
-                $run->setUser(null);
-            }
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, RunBuyer>
-     */
-    public function getRunBuyers(): Collection
-    {
-        return $this->runBuyers;
-    }
-
-    public function addRunBuyer(RunBuyer $runBuyer): static
-    {
-        if (!$this->runBuyers->contains($runBuyer)) {
-            $this->runBuyers->add($runBuyer);
-            $runBuyer->setUser($this);
-        }
-
-        return $this;
-    }
-
-    public function removeRunBuyer(RunBuyer $runBuyer): static
-    {
-        if ($this->runBuyers->removeElement($runBuyer)) {
-            // set the owning side to null (unless already changed)
-            if ($runBuyer->getUser() === $this) {
-                $runBuyer->setUser(null);
             }
         }
 

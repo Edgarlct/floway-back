@@ -33,12 +33,6 @@ class Audio
     #[ORM\JoinColumn(nullable: false)]
     private ?User $user = null;
 
-    /**
-     * @var Collection<int, ActivationParam>
-     */
-    #[ORM\OneToMany(targetEntity: ActivationParam::class, mappedBy: 'audio')]
-    private Collection $activationParams;
-
     #[Groups(['readData'])]
     #[ORM\Column]
     private ?int $fileSize = null;
@@ -107,36 +101,6 @@ class Audio
     public function setUser(?User $user): static
     {
         $this->user = $user;
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, ActivationParam>
-     */
-    public function getActivationParams(): Collection
-    {
-        return $this->activationParams;
-    }
-
-    public function addActivationParam(ActivationParam $activationParam): static
-    {
-        if (!$this->activationParams->contains($activationParam)) {
-            $this->activationParams->add($activationParam);
-            $activationParam->setAudio($this);
-        }
-
-        return $this;
-    }
-
-    public function removeActivationParam(ActivationParam $activationParam): static
-    {
-        if ($this->activationParams->removeElement($activationParam)) {
-            // set the owning side to null (unless already changed)
-            if ($activationParam->getAudio() === $this) {
-                $activationParam->setAudio(null);
-            }
-        }
 
         return $this;
     }
