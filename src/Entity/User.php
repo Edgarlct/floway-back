@@ -71,6 +71,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?bool $coachAudioEnabled = true;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $expoToken = null;
+
     public function __construct()
     {
         $this->audio = new ArrayCollection();
@@ -280,6 +283,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setCoachAudioEnabled(bool $coachAudioEnabled): static
     {
         $this->coachAudioEnabled = $coachAudioEnabled;
+
+        return $this;
+    }
+
+    public function getExpoToken(): ?string
+    {
+        return $this->expoToken;
+    }
+
+    public function setExpoToken(?string $expoToken): static
+    {
+        $this->expoToken = $expoToken;
 
         return $this;
     }

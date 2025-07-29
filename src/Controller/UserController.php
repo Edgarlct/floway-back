@@ -382,4 +382,58 @@ class UserController extends HelperController
         }
         return $this->res("User or picture not found", null, 404);
     }
+
+    #[Route('/api/user/token', methods: ["POST"])]
+    #[OA\Post(
+        path: '/api/user/token',
+        summary: 'Set user Expo token',
+        description: 'Save or update the Expo push notification token for the authenticated user',
+        tags: ['User'],
+        security: [['bearerAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'expoToken', type: 'string', description: 'Expo push notification token', example: 'ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]')
+                ],
+                type: 'object'
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Expo token saved successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'expoToken', type: 'string', example: 'ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]')
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'User not found',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string', example: 'User not found')
+                    ],
+                    type: 'object'
+                )
+            )
+        ]
+    )]
+    public function setUserToken(Request $request): Response
+    {
+        $payload = json_decode($request->getContent(), true);
+        $user = $this->getUser();
+        if (!$user) {
+            return $this->res("User not found", null, 404);
+        }
+
+        $user->setExpoToken($payload['expoToken'] ?? null);
+        $this->entityManager->persist($user);
+        $this->entityManager->flush();
+
+        return $this->success($payload['expoToken']);
+    }
 }
