@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Friend;
 use App\Entity\FriendNotificationSettings;
 use App\Entity\User;
+use App\Service\NotificationService;
 use App\Tools\NewPDO;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -60,7 +61,7 @@ class FriendController extends HelperController
             )
         ]
     )]
-    public function requestFriend(Request $request)
+    public function requestFriend(Request $request, NotificationService $notificationService)
     {
         $payload = json_decode($request->getContent(), true);
         if (!$this->checkKeyInPayload($payload, ['friend_id'])) {
@@ -86,8 +87,14 @@ class FriendController extends HelperController
         $friend->setReceiver($friend_found);
         $friend->setWaiting(true);
 
-        $this->entityManager->persist($friend);
-        $this->entityManager->flush();
+//        $this->entityManager->persist($friend);
+//        $this->entityManager->flush();
+
+
+        $notificationService->sendNotificationToUser($friend_found->getId(), $user->getFirstName() . " " . $user->getLastName() . " vous demande en ami", "Vous avez reçu une demande d'ami de " . $user->getFirstName() . " " . $user->getLastName(), [
+            'type' => 'friend_request',
+            'request_id' => $friend->getId()
+        ]);
 
         return $this->res("Friend request sent");
     }
