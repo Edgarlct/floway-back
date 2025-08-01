@@ -87,8 +87,8 @@ class FriendController extends HelperController
         $friend->setReceiver($friend_found);
         $friend->setWaiting(true);
 
-//        $this->entityManager->persist($friend);
-//        $this->entityManager->flush();
+        $this->entityManager->persist($friend);
+        $this->entityManager->flush();
 
 
         $notificationService->sendNotificationToUser($friend_found->getId(), $user->getFirstName() . " " . $user->getLastName() . " vous demande en ami", "Vous avez reçu une demande d'ami de " . $user->getFirstName() . " " . $user->getLastName(), [
